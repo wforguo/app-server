@@ -14,6 +14,7 @@
     $.ajax({
         // 40v52n7xjgxeg0z72wwe2a621idw81f4
         url:'//www.forguo.cn/api/weixin/share',
+        // //server.forguo.cn/wxShare(云开发)
         data:{
             url: window.location.href,
         },
