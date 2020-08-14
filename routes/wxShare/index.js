@@ -57,11 +57,21 @@ router.post('/share', async (ctx, next) => {
     const {
         url,
     } = body;
-    ctx.body = {
-        code: 200,
-        message: 'ok',
-        data: url,
-    };
+    try {
+        let res = await wxsdk(url);
+        ctx.body = {
+            code: 200,
+            message: 'ok',
+            data: res.data,
+        };
+    } catch (e) {
+        ctx.body = {
+            code: 10086,
+            message: 'error',
+            data: e,
+            err: JSON.stringify(e)
+        };
+    }
 });
 
 module.exports = router;
