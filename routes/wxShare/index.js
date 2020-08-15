@@ -30,7 +30,7 @@ router.get('/share', async (ctx, next) => {
         ctx.body = {
             code: 200,
             message: 'ok',
-            data: res.data,
+            data: res,
         };
     } catch (e) {
         ctx.body = {
@@ -62,7 +62,7 @@ router.post('/share', async (ctx, next) => {
         ctx.body = {
             code: 200,
             message: 'ok',
-            data: res.data,
+            data: res,
         };
     } catch (e) {
         ctx.body = {

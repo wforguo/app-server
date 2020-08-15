@@ -6,6 +6,7 @@
 // 云函数入口文件
 const request = require('request');
 const crypto = require('crypto');
+const cache = require('memory-cache'); // 缓存
 
 // 公众号配置
 const config = {
@@ -61,17 +62,26 @@ function raw(args) {
 // 获取access_token访问令牌
 function accessToken () {
     return new Promise((resolve, reject) => {
-        const {
-            APPID,
-            APPSECRET
-        } = config;
-        request(`https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${APPID}&secret=${APPSECRET}`, function (error, response, body) {
-            if (!error && response.statusCode === 200) {
-                resolve(body);
-            } else {
-                reject(error || response || body);
-            }
-        });
+        // 先判断缓存中是否存在access_token
+        if (!cache.get('accessToken')) { // 如果 access_token 不存在则将请求结果保存进缓存
+            const {
+                APPID,
+                APPSECRET
+            } = config;
+            request(`https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${APPID}&secret=${APPSECRET}`, function (error, response, data) {
+                let result = JSON.parse(data);
+                console.log('accessToken', result);
+                if (!error && response.statusCode === 200 && result.access_token) {
+                    cache.put('accessToken', result.access_token, (result.expires_in - 200) * 1000); // 缓存access_token
+                    resolve(result.access_token);
+                } else {
+                    console.warn(' accessToken ===== >', result.errmsg || response || error);
+                    reject(result.errmsg || response || error);
+                }
+            });
+        } else { // 否则直接导出缓存中的 access_token
+            resolve(cache.get('accessToken'))
+        }
     });
 }
 
@@ -85,19 +95,27 @@ function accessToken () {
 // 获取jsapi_ticket临时票据
 function jsapiTicket () {
     return new Promise((resolve, reject) => {
-        accessToken().then(data => {
-            let res = JSON.parse(data);
-            console.log('accessToken', res);
-            request(`https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${res.access_token}&type=jsapi`, function (error, response, body) {
-                if (!error && response.statusCode === 200) {
-                    resolve(body);
-                } else {
-                    reject(error || response || body);
-                }
+        // 先判断缓存中是否存在ticket
+        if (!cache.get('ticket')) { // 如果 ticket 不存在则将请求结果保存进缓存
+            accessToken().then(res => {
+                request(`https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${res}&type=jsapi`, function (error, response, data) {
+                    let result = JSON.parse(data);
+                    console.log('jsapiTicket', result);
+                    if (!error && response.statusCode === 200 && result.errcode === 0) {
+                        cache.put('ticket', result.ticket, (result.expires_in - 200) * 1000); // 缓存access_token
+                        resolve(result.ticket);
+                    } else {
+                        console.warn(' jsapiTicket ===== >', result.errmsg || response || error);
+                        reject(result.errmsg || response || error);
+                    }
+                });
+            }, (error) => {
+                console.warn(' jsapiTicket ===== >', error);
+                reject(error);
             });
-        }, (error) => {
-            resolve(error);
-        });
+        } else {
+            resolve(cache.get('ticket'))
+        }
     })
 }
 
@@ -115,25 +133,20 @@ function jsapiTicket () {
 
 function wxsdk (url) {
     return new Promise((resolve, reject) => {
-        jsapiTicket().then(data => {
-            let res = JSON.parse(data);
-            console.log('jsapiTicket', res);
+        jsapiTicket().then(res => {
             let ret = {
-                jsapi_ticket: res.ticket,
+                jsapi_ticket: res,
                 nonceStr: createNonceStr(),
                 timestamp: createTimestamp(),
-                url
+                url: decodeURIComponent(url)
             };
             let string = raw(ret);
             ret.signature = sha1(string);
             ret.appId = config.APPID;
             console.log('ret', ret);
-            resolve({
-                errcode: 0,
-                errmsg: 'ok',
-                data: ret
-            })
+            resolve(ret)
         }, (error) => {
+            console.warn(' wxsdk ===== >', error);
             reject(error);
         });
     });
