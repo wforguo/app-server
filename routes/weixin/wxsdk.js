@@ -70,7 +70,6 @@ function accessToken () {
             } = config;
             request(`https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${APPID}&secret=${APPSECRET}`, function (error, response, data) {
                 let result = JSON.parse(data);
-                console.log('accessToken', result);
                 if (!error && response.statusCode === 200 && result.access_token) {
                     cache.put('accessToken', result.access_token, (result.expires_in - 200) * 1000); // 缓存access_token
                     resolve(result.access_token);
@@ -85,13 +84,6 @@ function accessToken () {
     });
 }
 
-// {
-// "errcode": 0,
-// "errmsg": "ok",
-// "ticket": "kgt8ON7yVITDhtdwci0qeewU2G8vmQlDZmo84VyNGCa19S6x9fIJenFTBFh9dCkKegRsaJ8V7_CsttbRoCQiIA",
-// "expires_in": 7200
-// }
-
 // 获取jsapi_ticket临时票据
 function jsapiTicket () {
     return new Promise((resolve, reject) => {
@@ -100,7 +92,6 @@ function jsapiTicket () {
             accessToken().then(res => {
                 request(`https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${res}&type=jsapi`, function (error, response, data) {
                     let result = JSON.parse(data);
-                    console.log('jsapiTicket', result);
                     if (!error && response.statusCode === 200 && result.errcode === 0) {
                         cache.put('ticket', result.ticket, (result.expires_in - 200) * 1000); // 缓存access_token
                         resolve(result.ticket);

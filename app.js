@@ -22,8 +22,8 @@ figlet('App  Server', function(err, data) {
 
 const app = new Koa();
 
-// wxShare
-const wxShare = require('./routes/wxShare');
+// weixin
+const weixin = require('./routes/weixin');
 
 // error handler
 onerror(app);
@@ -35,7 +35,7 @@ if (process.env.NODE_ENV === 'production') {
 app.use(middleWares);
 
 // routes
-app.use(wxShare.routes(), wxShare.allowedMethods());
+app.use(weixin.routes(), weixin.allowedMethods());
 
 // error-handling
 app.on('error', (err, ctx) => {

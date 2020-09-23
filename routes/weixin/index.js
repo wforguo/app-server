@@ -3,7 +3,7 @@
  * @Author forguo
  * @Date 2019/12/14
  */
-
+const request = require('request');
 const router = require('koa-router')();
 const wxsdk = require('./wxsdk');
 
@@ -72,6 +72,31 @@ router.post('/share', async (ctx, next) => {
             err: JSON.stringify(e)
         };
     }
+});
+
+/**
+ * 公众号授权（get方式）
+ */
+const APPID = 'wx524c7234498cfc11';
+const APPSECRET = 'b845362de2514656ce5893a0f9f617ff';
+const REDIRECT_URI = 'https://forguo.com.cn';
+
+router.get('/login', async (ctx, next) => {
+    let url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APPID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect`;
+    ctx.response.redirect(url); // 重定向到这个地址
+});
+
+// 获取code
+router.get('/auth', async (ctx, next) => {
+    let code = ctx.query.code;
+    request(`https://api.weixin.qq.com/sns/oauth2/access_token?appid=${APPID}&secret=${APPSECRET}&code=${code}&grant_type=authorization_code`, function (error, response, data) {
+        let result = JSON.parse(data);
+        console.log('accessToken', result);
+        if (!error && response.statusCode === 200 && result.access_token) {
+        } else {
+            console.warn(' accessToken ===== >', result.errmsg || response || error);
+        }
+    });
 });
 
 module.exports = router;

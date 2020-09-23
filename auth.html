@@ -1,0 +1,106 @@
+<html>
+<head>
+    <title>云开发 Web 能力极简示例</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+    <script>
+        window.onerror = e => {
+            alert('window error ' + e)
+        }
+    </script>
+    <!-- 调试用的移动端 console -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
+    <!-- 公众号 JSSDK -->
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+    <!-- 云开发 Web SDK -->
+    <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
+    <script>
+        if (window.wx) {
+            window.cloud = wx.cloud
+        }
+
+        var urlSearch = new URLSearchParams(location.search);
+        var accessToken = urlSearch.get('access_token');
+        var refreshToken = urlSearch.get('refresh_token');
+
+        /**
+         * 检查/发起登录
+         * 1. 函数会检查当前是否已登录（checkLogin）
+         * 2. 如果未登录，会 10s 后自动发起登录（startLogin）
+         * 3. 如果已登录，会初始化实例，使用指定的小程序云开发资源
+         */
+        window.doLogin = async () => {
+            try {
+                const checkLoginOptions = {
+                    provider: 'OfficialAccount',
+                    appid: '公众号 AppID',
+                };
+
+                if (urlSearch.get('oauthredirect') === '1') {
+                    checkLoginOptions.accessToken = accessToken;
+                    checkLoginOptions.refreshToken = refreshToken
+                }
+
+                console.log(`checkLogin options: `, checkLoginOptions);
+                const result = await cloud.checkLogin(checkLoginOptions);
+                console.log(`checkLogin result: `, result);
+
+                if (result.errCode === 0 && result.loggedIn) {
+                    console.log(`checkLogin success`);
+
+                    const instance = window.instance = new cloud.Cloud({
+                        appid: '公众号 AppID',
+                        resourceAppid: '资源方小程序 AppID',
+                        resourceEnv: '资源方云环境 ID',
+                    });
+                    const initResult = await instance.init();
+
+                    console.log(`instance inited`, initResult);
+                    console.log(`can use cloud instance to access resource now !`);
+
+                    const els = [...document.getElementsByClassName('display-none')];
+                    els.forEach(el => el.classList.remove('display-none'))
+                } else {
+                    console.log(`checkLogin with sdk errCode ${result.errCode} errMsg ${result.errMsg}, will start oauth in 10s`);
+
+                    setTimeout(() => {
+                        try {
+                            cloud.startLogin({
+                                provider: 'OfficialAccount',
+                                appid: '公众号 AppID',
+                                scope: 'snsapi_base',
+                                redirectUri: `授权回调 URL`,
+                            })
+                        } catch (e) {
+                            console.error(`startLogin fail: ${e}`);
+                            console.warn(`will start OfficialAccount OAuth login in 10s.`)
+                        }
+                    }, 10000)
+                }
+            } catch (e) {
+                console.error(e)
+            }
+        };
+        window.runWithLogs = async (fn, before, after) => {
+            try {
+                console.log(before);
+                const res = await fn();
+                console.log(`${after}: ${JSON.stringify(res)}`)
+            } catch (e) {
+                console.error(`error: ${e}`)
+            }
+        }
+    </script>
+</head>
+<body>
+    <h2>云开发 Web 能力极简示例</h2>
+    <p>请注意按照文档说明配置好，主要包括：</p>
+    <p>1. 配置好公众号的授权回调域名及 JS 安全域名</p>
+    <p>2. 配置好云开发授权关系（小程序授权云开发资源给公众号）</p>
+    <p>3. 将代码中相应需要填入小程序/公众号 AppID 的地方进行相应改动</p>
+    <p>4. 编写部署好小程序云开发对应云环境的 cloudbase_auth 云函数</p>
+    <p>5. 准备好后，页面加载后先点击登录，登录后再执行访问资源等其他操作，日志可在调试器查看</p>
+    <p><a href="javascript:" onclick="doLogin()">登录（云开发公众号网页授权）</a></p>
+</body>
+</html>
