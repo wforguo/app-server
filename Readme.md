@@ -1,10 +1,10 @@
 # server（服务端）
 
-> 一个使用Koa2获取jssdk签名的接口（获取权限验证配置）
+## 1.使用Koa2获取jssdk签名的接口（获取权限验证配置）
 
 [微信sdk文章](https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/JS-SDK.html#2)
 
-## 使用
+### 使用
 
 支持get和post
 
@@ -67,8 +67,13 @@
     });
 ```
 
-## 线上demo
+### 线上demo
 
 [分享](https://forguo.cn/app/)
 
 代码见 `index.html`
+
+### 2.微信公众号授权
+
+> 订阅号授权
+
