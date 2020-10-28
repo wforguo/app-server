@@ -8,7 +8,7 @@ const router = require('koa-router')();
 const wxsdk = require('./wxsdk');
 
 // 添加路由前缀
-router.prefix('/api/weixin');
+router.prefix('/jssdk');
 
 /**
  * 分享（get方式）

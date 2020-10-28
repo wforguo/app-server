@@ -33,7 +33,8 @@
             //分享代码
             if(typeof wx != "undefined"){
                 $.ajax({
-                    url:'//server.forguo.cn/wxShare',
+                    // url:'//server.forguo.cn/wxShare',
+                    url:'https://api.cloud-app.com.cn/wechat/jssdk/share',
                     data: {
                         url: window.location.href,
                     },
