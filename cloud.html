@@ -34,14 +34,14 @@
             if(typeof wx != "undefined"){
                 $.ajax({
                     // url:'//server.forguo.cn/wxShare',
-                    url:'https://api.cloud-app.com.cn/wechat/jssdk/share',
+                    url: 'https://api.cloud-app.com.cn/wechat/jssdk/share',
                     data: {
                         url: window.location.href,
                     },
                     type:'POST',
                     dataType: 'json',
                     noloading: true,
-                    success:function(res){
+                    success: function(res) {
                         var data = res.data;
                         wx.config({
                             debug: false,
